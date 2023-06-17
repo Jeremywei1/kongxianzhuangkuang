@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>司机排班</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.15/dist/tailwind.min.css">
+</head>
+
+<body>
+  <div class="container mx-auto p-8">
+    <div class="date-picker mb-4">
+      <input type="date" id="selectedDate" value="">
+    </div>
+    <div id="driverList"></div>
+    <div class="driver-operations mt-8">
+      <input type="text" id="newDriverName" placeholder="输入新司机名称" class="border p-2 rounded">
+      <button id="addDriverButton" class="bg-green-500 text-white px-4 py-2 rounded">添加司机</button>
+      <button id="removeDriverButton" class="bg-red-500 text-white px-4 py-2 rounded">删除司机</button>
+    </div>
+  </div>
+
+  <script>
+    let drivers = [
+      { name: '司机A', schedule: [] },
+      { name: '司机B', schedule: [] },
+      { name: '司机C', schedule: [] }
+      // 添加更多司机
+    ];
+
+    const timeSlots = [
+      { start: '00:00', end: '01:00' },
+      { start: '01:00', end: '02:00' },
+      { start: '02:00', end: '03:00' },
+      { start: '03:00', end: '04:00' },
+      { start: '04:00', end: '05:00' },
+      { start: '05:00', end: '06:00' },
+      { start: '06:00', end: '07:00' },
+      { start: '07:00', end: '08:00' },
+      { start: '08:00', end: '09:00' },
+      { start: '09:00', end: '10:00' },
+      { start: '10:00', end: '11:00' },
+      { start: '11:00', end: '12:00' },
+      { start: '12:00', end: '13:00' },
+      { start: '13:00', end: '14:00' },
+      { start: '14:00', end: '15:00' },
+      { start: '15:00', end: '16:00' },
+      { start: '16:00', end: '17:00' },
+      { start: '17:00', end: '18:00' },
+      { start: '18:00', end: '19:00' },
+      { start: '19:00', end: '20:00' },
+      { start: '20:00', end: '21:00' },
+      { start: '21:00', end: '22:00' },
+      { start: '22:00', end: '23:00' },
+      { start: '23:00', end: '00:00' }
+    ];
+
+    const driverListElem = document.getElementById('driverList');
+    const selectedDateElem = document.getElementById('selectedDate');
+    const newDriverNameElem = document.getElementById('newDriverName');
+    const addDriverButton = document.getElementById('addDriverButton');
+    const removeDriverButton = document.getElementById('removeDriverButton');
+
+    let selectedDate = null;
+
+    function updateDriverSchedule(date) {
+      drivers.forEach(driver => {
+        driver.schedule = getDriverSchedule();
+      });
+      renderDriverList();
+    }
+
+    function getDriverSchedule() {
+      const schedule = [];
+      for (let i = 0; i < timeSlots.length; i++) {
+        schedule.push(false);
+      }
+      return schedule;
+    }
+
+    function selectDate() {
+      selectedDate = selectedDateElem.value;
+      updateDriverSchedule(selectedDate);
+    }
+
+    function toggleTimeSlot(driverIndex, timeSlotIndex) {
+      const driver = drivers[driverIndex];
+      const schedule = driver.schedule;
+      schedule[timeSlotIndex] = !schedule[timeSlotIndex];
+      renderDriverList();
+    }
+
+    function addDriver() {
+      const newDriverName = newDriverNameElem.value.trim();
+      if (newDriverName !== '' && !drivers.some(driver => driver.name === newDriverName)) {
+        drivers.push({ name: newDriverName, schedule: [] });
+        renderDriverList();
+        newDriverNameElem.value = '';
+      }
+    }
+
+    function removeDriver(driverIndex) {
+      drivers.splice(driverIndex, 1);
+      renderDriverList();
+    }
+
+    function renderDriverList() {
+      driverListElem.innerHTML = '';
+
+      const tableElem = document.createElement('table');
+      tableElem.classList.add('table-auto');
+
+      // 创建表头
+      const theadElem = document.createElement('thead');
+      const headerRowElem = document.createElement('tr');
+      const emptyHeaderCellElem = document.createElement('th');
+      headerRowElem.appendChild(emptyHeaderCellElem);
+      drivers.forEach((driver, driverIndex) => {
+        const driverNameCellElem = document.createElement('th');
+        driverNameCellElem.textContent = driver.name;
+        headerRowElem.appendChild(driverNameCellElem);
+      });
+      theadElem.appendChild(headerRowElem);
+      tableElem.appendChild(theadElem);
+
+      // 创建表格主体
+      const tbodyElem = document.createElement('tbody');
+      timeSlots.forEach((timeSlot, timeSlotIndex) => {
+        const rowElem = document.createElement('tr');
+        const timeSlotCellElem = document.createElement('td');
+        timeSlotCellElem.textContent = `${timeSlot.start} - ${timeSlot.end}`;
+        rowElem.appendChild(timeSlotCellElem);
+        drivers.forEach((driver, driverIndex) => {
+          const driverCellElem = document.createElement('td');
+          driverCellElem.classList.add('text-center');
+          if (driver.schedule[timeSlotIndex]) {
+            driverCellElem.classList.add('bg-green-500', 'text-white');
+            driverCellElem.textContent = '忙碌';
+          } else {
+            driverCellElem.classList.add('bg-red-500', 'text-white');
+            driverCellElem.textContent = '空闲';
+          }
+          driverCellElem.classList.add('cursor-pointer');
+          driverCellElem.addEventListener('click', () => {
+            toggleTimeSlot(driverIndex, timeSlotIndex);
+          });
+          rowElem.appendChild(driverCellElem);
+        });
+        tbodyElem.appendChild(rowElem);
+      });
+      tableElem.appendChild(tbodyElem);
+
+      driverListElem.appendChild(tableElem);
+    }
+
+    selectedDateElem.addEventListener('change', selectDate);
+    addDriverButton.addEventListener('click', addDriver);
+    removeDriverButton.addEventListener('click', removeDriver);
+
+    // 初始化为今天的日期
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    selectedDateElem.value = `${year}-${month}-${day}`;
+    selectDate();
+  </script>
+</body>
+
+</html>
